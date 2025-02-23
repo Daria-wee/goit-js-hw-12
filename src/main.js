@@ -6,9 +6,7 @@ import {
 import { getAxiosPhotos } from './js/pixabay-api';
 import iziToast from 'izitoast';
 
-/* =================================================================== */
-
-const formEl = document.querySelector('.js-page-form');
+const formEl = document.querySelector('.js-search-form');
 const galleryEl = document.querySelector('.js-gallery');
 
 const loaderEl = document.querySelector('.js-loader');
@@ -79,7 +77,6 @@ const onloadMoreBtnElClick = async () => {
   checkBtnStatus();
   scrollPage();
 };
-/* =================================================================== */
 
 const showLoader = () => {
   loaderEl.classList.remove('is-hidden');
