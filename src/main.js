@@ -21,86 +21,83 @@ const params = {
 
 const onFormElSubmit = async event => {
   event.preventDefault();
-  params.searchedValue = formEl.elements.user_query.value.trim();
+  const searchQuery = formEl.elements.user_query.value.trim();
+
+  if (!searchQuery) {
+    iziToast.warning({
+      message: 'Please enter a search query!',
+      position: 'topRight',
+    });
+    return;
+  }
+
+  params.searchedValue = searchQuery;
   params.page = 1;
 
   showLoader();
 
-  const data = await getAxiosPhotos(
-    params.searchedValue,
-    params.page,
-    params.perPage
-  );
-  if (data.hits && data.hits.length === 0) {
+  try {
+    const data = await getAxiosPhotos(params.searchedValue, params.page, params.perPage);
+
+    if (data.hits.length === 0) {
+      iziToast.error({
+        message: 'Sorry, there are no images matching your search query. Please try again!',
+        position: 'topRight',
+      });
+      galleryEl.innerHTML = '';
+      formEl.reset();
+      hideloadBtn();
+      return;
+    }
+
+    galleryEl.innerHTML = data.hits.map(createGalleryCardTemplate).join('');
+    initializeLightbox();
+
+    params.total = data.totalHits;
+    checkBtnStatus();
+  } catch (error) {
     iziToast.error({
-      message:
-        'Sorry, there are no images matching your search query. Please try again!',
+      message: 'Something went wrong. Please try again!',
       position: 'topRight',
     });
-    galleryEl.innerHTML = '';
-    formEl.reset();
+  } finally {
     hideLoader();
-    hideloadBtn();
-    return;
   }
-
-  const galleryCardsTemplate = data.hits
-    .map(imgDetails => createGalleryCardTemplate(imgDetails))
-    .join('');
-
-  galleryEl.innerHTML = galleryCardsTemplate;
-
-  params.total = data.totalHits;
-
-  checkBtnStatus();
-
-  hideLoader();
-  showloadBtn();
 };
 
 const onloadMoreBtnElClick = async () => {
   hideloadBtn();
   showLoader();
-
   params.page += 1;
 
-  const data = await getAxiosPhotos(params.searchedValue, params.page);
-  const galleryCardsTemplate = data.hits
-    .map(imgDetails => createGalleryCardTemplate(imgDetails))
-    .join('');
+  try {
+    const data = await getAxiosPhotos(params.searchedValue, params.page, params.perPage);
+    
+    galleryEl.insertAdjacentHTML('beforeend', data.hits.map(createGalleryCardTemplate).join(''));
+    initializeLightbox();
 
-  galleryEl.insertAdjacentHTML('beforeend', galleryCardsTemplate);
-
-  initializeLightbox();
-  hideLoader();
-  showloadBtn();
-  checkBtnStatus();
-  scrollPage();
+    checkBtnStatus();
+    scrollPage();
+  } catch (error) {
+    iziToast.error({
+      message: 'Something went wrong while loading more images. Please try again!',
+      position: 'topRight',
+    });
+  } finally {
+    hideLoader();
+  }
 };
 
-const showLoader = () => {
-  loaderEl.classList.remove('is-hidden');
-};
-
-const hideLoader = () => {
-  loaderEl.classList.add('is-hidden');
-};
-
-const showloadBtn = () => {
-  loadMoreBtnEl.classList.remove('is-hidden');
-};
-
-const hideloadBtn = () => {
-  loadMoreBtnEl.classList.add('is-hidden');
-};
+const showLoader = () => loaderEl.classList.remove('is-hidden');
+const hideLoader = () => loaderEl.classList.add('is-hidden');
+const showloadBtn = () => loadMoreBtnEl.classList.remove('is-hidden');
+const hideloadBtn = () => loadMoreBtnEl.classList.add('is-hidden');
 
 const checkBtnStatus = () => {
-  const perPage = 18;
-  const maxPage = Math.ceil(params.total / perPage);
-
+  const maxPage = Math.ceil(params.total / params.perPage);
   if (params.page >= maxPage) {
     hideloadBtn();
-    iziToast.error({
+    iziToast.info({
       position: 'topRight',
       message: "We're sorry, but you've reached the end of search results.",
     });
@@ -110,13 +107,13 @@ const checkBtnStatus = () => {
 };
 
 const scrollPage = () => {
-  const info = galleryEl.firstElementChild.getBoundingClientRect();
-  const height = info.height + 102;
+  const { height } = galleryEl.firstElementChild.getBoundingClientRect();
   scrollBy({
     behavior: 'smooth',
     top: height * 2,
   });
 };
+
 
 loadMoreBtnEl.addEventListener('click', onloadMoreBtnElClick);
 formEl.addEventListener('submit', onFormElSubmit);

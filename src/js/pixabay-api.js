@@ -14,12 +14,18 @@ export const getAxiosPhotos = async (searchedQuery, page) => {
     page: page,
   });
 
-  try {
-    const response = await axios.get(`${BASE_URL}${urlParams}`);
-    return response.data;
-  } catch (err) {
-    throw new Error(err.message);
-  }
+try {
+  const response = await axios.get(`${BASE_URL}${urlParams}`);
+  return response.data;
+} catch (err) {
+  hideLoader(); // Приховуємо лоадер перед помилкою!
+  iziToast.error({
+    message: 'Something went wrong. Please try again!',
+    position: 'topRight',
+  });
+  throw new Error(err.message);
+}
+
 };
 
 
