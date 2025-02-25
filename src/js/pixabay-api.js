@@ -18,7 +18,7 @@ try {
   const response = await axios.get(`${BASE_URL}${urlParams}`);
   return response.data;
 } catch (err) {
-  hideLoader(); // Приховуємо лоадер перед помилкою!
+  hideLoader();
   iziToast.error({
     message: 'Something went wrong. Please try again!',
     position: 'topRight',
